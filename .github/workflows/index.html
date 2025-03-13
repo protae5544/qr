@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>เปิดเอกสาร</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Prompt:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Prompt', 'Roboto', sans-serif;
+            background-color: rgba(0, 0, 0, 0.4);
+            color: #202124;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .android-dialog {
+            width: 90%;
+            max-width: 380px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .dialog-header {
+            padding: 24px 24px 8px;
+        }
+        
+        .dialog-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 8px;
+        }
+        
+        .dialog-subtitle {
+            font-size: 14px;
+            color: #5f6368;
+        }
+        
+        .dialog-body {
+            padding: 8px 24px 16px;
+        }
+        
+        .file-option, .folder-option {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .file-icon, .folder-icon {
+            width: 24px;
+            margin-right: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .material-icons {
+            color: #5f6368;
+        }
+        
+        .file-name, .folder-name {
+            font-size: 16px;
+            color: #202124;
+        }
+        
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            padding: 16px 0 0;
+        }
+        
+        .checkbox-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            margin-right: 16px;
+            border: 2px solid #5f6368;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label {
+            font-size: 14px;
+            color: #5f6368;
+        }
+        
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            padding: 8px 8px 8px;
+        }
+        
+        .android-btn {
+            font-family: 'Prompt', 'Roboto', sans-serif;
+            min-width: 64px;
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: none;
+            padding: 10px 16px;
+            margin-left: 8px;
+            border: none;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            background-color: transparent;
+            color: #1a73e8;
+            transition: background-color 0.2s;
+        }
+        
+        .android-btn:hover, .android-btn:focus {
+            background-color: rgba(26, 115, 232, 0.04);
+        }
+        
+        .android-btn:active {
+            background-color: rgba(26, 115, 232, 0.12);
+        }
+        
+        .android-btn.primary {
+            background-color: #1a73e8;
+            color: white;
+        }
+        
+        .android-btn.primary:hover, .android-btn.primary:focus {
+            background-color: #1765cc;
+        }
+        
+        .android-btn.primary:active {
+            background-color: #185abc;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            display: none;
+        }
+        
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(26, 115, 232, 0.2);
+            border-top: 3px solid #1a73e8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+        
+        .loading-text {
+            font-size: 14px;
+            color: #202124;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="android-dialog">
+        <div class="dialog-header">
+            <div class="dialog-title">ดาวน์โหลดไฟล์อีกครั้งไหม</div>
+            <div class="dialog-subtitle">มีชื่อไฟล์นี้อยู่แล้ว</div>
+        </div>
+        
+        <div class="dialog-body">
+            <div class="file-option">
+                <div class="file-icon">
+                    <i class="material-icons">description</i>
+                </div>
+                <div class="file-name" id="file-name">mpdf.pdf</div>
+            </div>
+            
+            <div class="folder-option">
+                <div class="folder-icon">
+                    <i class="material-icons">folder</i>
+                </div>
+                <div class="folder-name">ดาวน์โหลด</div>
+            </div>
+            
+            <div class="checkbox-option">
+                <div class="checkbox-container">
+                    <div class="checkbox" id="dont-show-checkbox"></div>
+                    <div class="checkbox-label">ไม่ต้องแสดงอีก</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dialog-actions">
+            <button class="android-btn" id="cancel-btn">ยกเลิก</button>
+            <button class="android-btn" id="open-btn">เปิด</button>
+            <button class="android-btn primary" id="download-btn">ดาวน์โหลด</button>
+        </div>
+    </div>
+    
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">กำลังดำเนินการ...</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // รับพารามิเตอร์จาก URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id') || '';
+            
+            // ตั้งค่า URL ของเว็บไซต์ต้นทาง
+            const originSite = "https://yourdomain.com"; // ใส่โดเมนเว็บไซต์ของคุณที่นี่
+            
+            // ฟังก์ชันแสดง Loading
+            function showLoading(message = 'กำลังดำเนินการ...') {
+                document.getElementById('loading-overlay').style.display = 'flex';
+                document.querySelector('.loading-text').textContent = message;
+                
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }, 1000);
+            }
+            
+            // เช็คบ็อกซ์ "ไม่ต้องแสดงอีก"
+            const checkbox = document.getElementById('dont-show-checkbox');
+            checkbox.addEventListener('click', function() {
+                if (this.innerHTML === '') {
+                    this.innerHTML = '<i class="material-icons" style="font-size: 14px; color: #1a73e8;">check</i>';
+                    this.style.border = '2px solid #1a73e8';
+                    this.style.backgroundColor = '#e8f0fe';
+                } else {
+                    this.innerHTML = '';
+                    this.style.border = '2px solid #5f6368';
+                    this.style.backgroundColor = 'transparent';
+                }
+            });
+            
+            // ปุ่มยกเลิก
+            document.getElementById('cancel-btn').addEventListener('click', function() {
+                window.history.back();
+            });
+            
+            // ปุ่มเปิด - เปิดในแท็บใหม่
+            document.getElementById('open-btn').addEventListener('click', function() {
+                showLoading('กำลังเปิดเอกสาร...');
+                // สร้าง URL สำหรับเปิด PDF โดยตรง
+                const openUrl = `${originSite}/genpdf_clmvreceiptpay.php?id=${id}`;
+                setTimeout(() => {
+                    window.open(openUrl, '_blank');
+                }, 500);
+            });
+            
+            // ปุ่มดาวน์โหลด - เปิดใน iframe ซ่อน
+            document.getElementById('download-btn').addEventListener('click', function() {
+                showLoading('กำลังดาวน์โหลด...');
+                // สร้าง URL สำหรับดาวน์โหลด
+                const downloadUrl = `${originSite}/genpdf_clmvreceiptpay.php?id=${id}`;
+                
+                setTimeout(() => {
+                    // เปิดในแท็บใหม่
+                    window.open(downloadUrl, '_blank');
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>
