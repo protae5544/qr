@@ -40,12 +40,20 @@ window.addEventListener('DOMContentLoaded', function() {
       }
     });
   }, 100); // รอสักนิดเพื่อให้หน้าโหลดก่อน
+
+  // สร้าง QR code และแสดงในตำแหน่งที่ระบุ
+  const pdfUrl = 'https://example.com/path/to/your.pdf';
+  QRCode.toCanvas(document.getElementById('qrcode'), pdfUrl, function (error) {
+    if (error) console.error(error);
+    console.log('QR code generated!');
+  });
 });
 </script>
     <head>
         <meta charset="UTF-8">
         <title></title>
-        <script src="https://unpkg.com/@zxing/library@latest"></script>  <!-- **[สำคัญ]** โหลดไลบรารี ZXing -->
+        <!-- แทนที่ไลบรารีเดิมด้วยไลบรารีใหม่ -->
+        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>  <!-- **[สำคัญ]** โหลดไลบรารี qrcode.js -->
         <style>
             body {
                 background-color: #444;
