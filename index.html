@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>ใบเสร็จรับเงิน</title>
+  <link rel="stylesheet" href="base.min.css" />
+  <link rel="stylesheet" href="fancy.min.css" />
+  <link rel="stylesheet" href="main.css" />
+
+  <style>
+    #controls-container {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #f5f5f5;
+      border-radius: 5px;
+    }
+    #downloadButton, #downloadAllButton {
+      padding: 8px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    #downloadButton:hover, #downloadAllButton:hover {
+      background-color: #45a049;
+    }
+    #dataSelector {
+      padding: 7px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      margin-right: 10px;
+      min-width: 300px;
+    }
+    .progress-bar {
+      width: 100%;
+      background-color: #f1f1f1;
+      border-radius: 4px;
+      margin-top: 10px;
+      display: none;
+    }
+    .progress {
+      width: 0%;
+      height: 20px;
+      background-color: #4CAF50;
+      text-align: center;
+      line-height: 20px;
+      color: white;
+      border-radius: 4px;
+    }
+    #status-text {
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    #qrcode-container {
+      position: relative;
+      width: 60px;
+      height: 60px;
+    }
+    .pdf-status {
+      font-size: 12px;
+      margin-top: 5px;
+      color: #666;
+    }
+    .pdf-status.saved {
+      color: #4CAF50;
+    }
+  </style>
+  <!-- ไลบรารีที่จำเป็น -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+<div id="page-container">
+  <div id="controls-container">
+    <select id="dataSelector">
+      <option value="">เลือกรายการ</option>
+    </select>
+    <button id="downloadButton">ดาวน์โหลด PDF</button>
+    <button id="downloadAllButton">ดาวน์โหลด PDF ทั้งหมด</button>
+    <div class="progress-bar" id="progressBar">
+      <div class="progress" id="progressIndicator">0%</div>
+    </div>
+    <div id="status-text"></div>
+  </div>
+
+  <div id="pf1" class="pf w0 h0" data-page-no="2" style="position: relative;">
+    <div class="pc pc1 w0 h0"><img class="bi x0 y0 w1 h1" alt="" src="bg.png" /></div>
+    <div class="t m0 x0 h2 y1 ff1 fs0 fc0 sc0 ls0 ws0">กรมการจัดหางาน</div>
+    <div class="t m0 x0 h2 y2 ff1 fs0 fc0 sc0 ls0 ws0">กระทรวงแรงงาน</div>
+    <div class="t m0 x1 h3 y3 ff2 fs1 fc0 sc0 ls0 ws0">ใบเสร็จรับเงิน</div>
+    <div class="t m0 x2 h3 y4 ff2 fs1 fc0 sc0 ls0 ws0">ต้นฉบับ</div>
+
+    <div class="t m0 x3 h2 y5 ff1 fs0 fc0 sc0 ls0 ws0">เลขที่</div>
+    <div id="receipt-number" class="t m0 x4 h2 y6 ff1 fs0 fc0 sc0 ls0 ws0">XXXXXXXXXX</div>
+
+    <div class="t m0 x5 h2 y7 ff1 fs0 fc0 sc0 ls0 ws0">ที่ท่าการ</div>
+    <div class="t m0 x4 h2 y8 ff1 fs0 fc0 sc0 ls0 ws0">ส่านักบริหารแรงงานต่างด้าว</div>
+
+    <div class="t m0 x6 h2 y9 ff1 fs0 fc0 sc0 ls0 ws0">วันที่</div>
+    <div class="t m0 x4 h2 ya ff1 fs0 fc0 sc0 ls0 ws0">01 เมษายน 2568</div>
+
+    <div class="t m0 x7 h2 yb ff1 fs0 fc0 sc0 ls0 ws0">เลขที่ใบช่าระเงิน</div>
+    <div id="payment-number" class="t m0 x4 h2 yc ff1 fs0 fc0 sc0 ls0 ws0">IVXXXXXXXX</div>
+
+    <div class="t m0 x8 h2 yd ff1 fs0 fc0 sc0 ls0 ws0">เลขรับค่าขอที่</div>
+    <div id="request-number" class="t m0 x9 h2 ye ff4 fs3 fc1 sc0 ls0 ws0">WP-XX-XXXXXX</div>
+
+    <div class="t m0 x8 h2 yf ff1 fs0 fc0 sc0 ls0 ws0">ชื่อผู้ช่าระเงิน</div>
+    <div id="payer-name" class="t m0 x9 h2 yz ff4 fs3 fc1 sc0 ls0 ws0">MR. EXAMPLE NAME</div>
+
+    <div class="t m0 xa h2 yf ff1 fs0 fc0 sc0 ls0 ws0">สัญชาติ</div>
+    <div id="nationality" class="t m0 xb h2 y10 ff1 fs0 fc0 sc0 ls0 ws0">ตัวอย่าง</div>
+
+    <div class="t m0 x8 h2 y11 ff1 fs0 fc0 sc0 ls0 ws0">เลขอ้างอิงคนต่างด้าว</div>
+    <div id="reference-number" class="t m0 x9 h2 y12 ff1 fs0 fc0 sc0 ls0 ws0">XXXXXXXXXXXX</div>
+
+    <div class="t m0 xc h2 y11 ff1 fs0 fc0 sc0 ls0 ws0">หมายเลขประจ่าตัวคนต่างด้าว</div>
+    <div id="foreigner-id" class="t m0 xd h2 y12 ff1 fs0 fc0 sc0 ls0 ws0">-</div>
+
+    <div class="t m0 x8 h2 y13 ff1 fs0 fc0 sc0 ls0 ws0">ชื่อนายจ้าง / สถานประกอบการ</div>
+    <div class="t m0 xe h2 y14 ff1 fs0 fc0 sc0 ls0 ws0">บริษัท บาน กง เอ็นจิเนียริ่ง จ่ากัด</div>
+
+    <div class="t m0 x8 h2 y15 ff1 fs0 fc0 sc0 ls0 ws0">เลขประจ่าตัวนายจ้าง</div>
+    <div class="t m0 xe h2 y16 ff1 fs0 fc0 sc0 ls0 ws0">0415567000061</div>
+
+    <div class="t m0 xf h4 y17 ff2 fs2 fc0 sc0 ls0 ws0">รายการ </div>
+    <div class="t m0 x20 h4 y17 ff2 fs2 fc0 sc0 ls0 ws0">จ่านวนเงิน</div>
+    <div class="t m0 x10 h5 y18 ff1 fs2 fc0 sc0 ls0 ws0">1. ค่าธรรมเนียมในการยื่นค่าขอ ฉบับละ 100 บาท</div>
+    <div class="t m0 xx h4 y18 ff1 fs2 fc0 sc0 ls0 ws0">100.00</div>
+    <div class="t m0 x10 h5 y19 ff1 fs2 fc0 sc0 ls0 ws0">2. ค่าธรรมเนียมใบอนุญาตท่างาน</div> 
+    <div class="t m0 xx h4 y19 ff1 fs2 fc0 sc0 ls0 ws0">900.00</div>
+    <div class="t m0 x12 h4 y1b ff2 fs2 fc0 sc0 ls0 ws0">รวมเป็นเงินทั้งสิ้น (บาท)</div>
+    <div class="t m0 x13 h4 y1c ff2 fs2 fc0 sc0 ls0 ws0">(หนึ่งพันบาทถ้วน)</div>
+    <div class="t m0 x15 h4 y1e ff2 fs2 fc0 sc0 ls0 ws0">1,000.00</div>
+    <div class="t m0 x16 h2 y1f ff1 fs0 fc0 sc0 ls0 ws0">ได้รับเงินไว้เป็นการถูกต้องแล้ว</div>
+    <div class="t m0 x17 h2 y20 ff1 fs0 fc0 sc0 ls0 ws0">(ลงชื่อ)</div>
+    <div class="t m0 x18 h2 y21 ff1 fs0 fc0 sc0 ls0 ws0">นางสาวอารีวรรณ โพธิ์นิ่มแดง</div>
+    <div class="t m0 x19 h2 y20 ff1 fs0 fc0 sc0 ls0 ws0">(ผู้รับเงิน)</div>
+    <div class="t m0 x1a h2 y22 ff1 fs0 fc0 sc0 ls0 ws0">ต่าแหน่ง</div>
+    <div class="t m0 x18 h2 y23 ff1 fs0 fc0 sc0 ls0 ws0">นักวิชาการแรงงานช่านาญการ</div>
+    <div class="t m0 x1b h6 y24 ff1 fs3 fc0 sc0 ls0 ws0">เอกสารอิเล็กทรอนิกส์ฉบับนี้ถูกสร้างจากระบบอนุญาต่างานคนต่างด้าวที่มีสถานะการ่างานไม่ถูกต้องตามกฎหมาย ตามมติคณะรัฐมนตรีเมื่อวันที่ 24 กันยายน 2567</div>
+    <div class="t m0 x1b h6 y25 ff1 fs3 fc0 sc0 ls0 ws0">โดยกรมการจัดหางาน กระทรวงแรงงาน</div>
+    <div class="t m0 x1b h6 y26 ff1 fs3 fc0 sc0 ls0 ws0">พิมพ์เอกสาร วันที่ 01/04/68 10:00 น.</div>
+    <!-- QR code จะถูกเพิ่มที่นี่ด้วย JavaScript -->
+    <div id="qrcode-container" style="position: absolute; left: 83px; top: 613px;"></div>
+    <div id="pdf-status" class="pdf-status" style="position: absolute; left: 83px; top: 680px;"></div>
+  </div>
+</div>
+
+<script>
+  // ประกาศ URL โฮสต์ของคุณไว้ด้านบนสุด
+  const SERVER_BASE_URL = "https://workerpemit2024coercb.netlify.app";
+
+  // ประกาศตัวแปรแบบ global
+  let workerData = [];
+  const { jsPDF } = window.jspdf;
+  window.jsPDF = jsPDF;
+  
+  // เก็บข้อมูลสถานะ PDF ที่บันทึกแล้ว
+  let savedPDFs = {};
+
+  // โหลดข้อมูล JSON และเติม dropdown
+  async function loadWorkerData() {
+    try {
+      // โหลดข้อมูลจากไฟล์ JSON
+      const response = await fetch('worker-database.json');
+      if (!response.ok) {
+        throw new Error('ไม่สามารถโหลดไฟล์ worker-database.json ได้');
+      }
+
+      workerData = await response.json();
+
+      // เติมข้อมูลลงใน dropdown
+      const selector = document.getElementById('dataSelector');
+      workerData.forEach((item, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.textContent = `${item['ชื่อภาษาอังกฤษ']} - ${item['เลขคำขอ']}`;
+        selector.appendChild(option);
+      });
+
+      // เพิ่ม event listener สำหรับการเปลี่ยนแปลง
+      selector.addEventListener('change', function() {
+        if (this.value === '') return;
+        updateReceiptData(workerData[this.value]);
+      });
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการโหลดข้อมูล:', error);
+      // หากมีข้อผิดพลาด ให้ใช้ข้อมูลตัวอย่างแทน
+      useDefaultData();
+    }
+  }
+
+  // ฟังก์ชั่นใช้ข้อมูลตัวอย่างหากไม่สามารถโหลดไฟล์ JSON ได้
+  function useDefaultData() {
+    workerData = [
+      {
+        'ชื่อภาษาอังกฤษ': 'MR. EXAMPLE NAME 1',
+        'เลขคำขอ': 'WP-68-XXXXXX',
+        'หมายเลขอ้างอิงคนต่างด้าว': 'XXXXXXXXXXXX',
+        'เลขที่บนขวาใบเสร็จ': 'XXXXXXXXXX',
+        'หมายเลขประจำตัว': '-',
+        'สัญชาติ': 'ตัวอย่าง 1',
+        'หมายเลขชำระเงิน': 'IVXXXXXXXX'
+      },
+      {
+        'ชื่อภาษาอังกฤษ': 'MR. EXAMPLE NAME 2',
+        'เลขคำขอ': 'WP-68-YYYYYY',
+        'หมายเลขอ้างอิงคนต่างด้าว': 'YYYYYYYYYYYY',
+        'เลขที่บนขวาใบเสร็จ': 'YYYYYYYYYY',
+        'หมายเลขประจำตัว': '-',
+        'สัญชาติ': 'ตัวอย่าง 2',
+        'หมายเลขชำระเงิน': 'IVYYYYYYYY'
+      }
+    ];
+
+    const selector = document.getElementById('dataSelector');
+    // ล้าง dropdown เดิมก่อน
+    selector.innerHTML = '<option value="">เลือกรายการ</option>';
+
+    workerData.forEach((item, idx) => {
+      const option = document.createElement('option');
+      option.value = idx;
+      option.textContent = `${item['ชื่อภาษาอังกฤษ']} - ${item['เลขคำขอ']}`;
+      selector.appendChild(option);
+    });
+
+    selector.addEventListener('change', function() {
+      if (this.value === '') return;
+      updateReceiptData(workerData[this.value]);
+    });
+  }
+
+  // อัปเดตข้อมูลบนใบเสร็จ
+  async function updateReceiptData(item) {
+    document.getElementById('payer-name').textContent = item['ชื่อภาษาอังกฤษ'];
+    document.getElementById('request-number').textContent = item['เลขคำขอ'];
+    document.getElementById('reference-number').textContent = item['หมายเลขอ้างอิงคนต่างด้าว'];
+    document.getElementById('receipt-number').textContent = item['เลขที่บนขวาใบเสร็จ'];
+    document.getElementById('foreigner-id').textContent = item['หมายเลขประจำตัว'];
+    document.getElementById('nationality').textContent = item['สัญชาติ'];
+    document.getElementById('payment-number').textContent = item['หมายเลขชำระเงิน'];
+    
+    // ตรวจสอบว่ามี PDF ในฐานข้อมูลหรือไม่
+    await checkExistingPDF(item);
+  }
+
+  // ตรวจสอบว่ามี PDF ในฐานข้อมูลหรือไม่
+  async function checkExistingPDF(item) {
+    const requestNumber = item['เลขคำขอ'];
+    const statusElement = document.getElementById('pdf-status');
+    
+    try {
+      // เรียก API เพื่อตรวจสอบว่ามี PDF อยู่แล้วหรือไม่
+      const response = await fetch(`${SERVER_BASE_URL}/.netlify/functions/check-receipt-exists?requestNumber=${encodeURIComponent(requestNumber)}`);
+      const data = await response.json();
+      
+      if (data.exists) {
+        // มี PDF อยู่แล้ว
+        savedPDFs[requestNumber] = {
+          url: data.url,
+          created_at: data.created_at
+        };
+        
+        // แสดงสถานะว่ามี PDF อยู่แล้ว
+        const date = new Date(data.created_at);
+        const formattedDate = `${date.toLocaleDateString('th-TH')} ${date.toLocaleTimeString('th-TH')}`;
+        statusElement.textContent = `มีไฟล์ PDF อยู่แล้ว (สร้างเมื่อ ${formattedDate})`;
+        statusElement.className = 'pdf-status saved';
+        
+        // สร้าง QR Code จาก URL ที่มีอยู่
+        generateQRCodeFromURL(data.url, requestNumber);
+      } else {
+        // ยังไม่มี PDF ต้องสร้างใหม่
+        statusElement.textContent = 'กำลังสร้างไฟล์ PDF...';
+        statusElement.className = 'pdf-status';
+        
+        // สร้าง PDF และบันทึกลงฐานข้อมูล
+        await generateAndSavePDF(item);
+      }
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการตรวจสอบ PDF:', error);
+      statusElement.textContent = 'ไม่สามารถตรวจสอบไฟล์ PDF ได้';
+      statusElement.className = 'pdf-status';
+      
+      // สร้าง QR Code แบบปกติ
+      generateAndShowQRCode(item);
+    }
+  }
+
+  // สร้าง PDF และบันทึกลงฐานข้อมูล
+  async function generateAndSavePDF(item) {
+    const requestNumber = item['เลขคำขอ'];
+    const statusElement = document.getElementById('pdf-status');
+    
+    try {
+      // สร้าง PDF
+      const doc = new jsPDF('p', 'mm', 'a4');
+      
+      const canvas = await html2canvas(document.getElementById('pf1'), {
+        scale: 12, // เพิ่มความคมชัด
+        useCORS: true,
+        allowTaint: true,
+        letterRendering: true
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const imgWidth = 210;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      
+      // แปลง PDF เป็น Base64
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
+      
+      // สร้างข้อมูลเมตาดาต้า
+      const metadata = {
+        payer_name: item['ชื่อภาษาอังกฤษ'],
+        receipt_number: item['เลขที่บนขวาใบเสร็จ'],
+        reference_number: item['หมายเลขอ้างอิงคนต่างด้าว'],
+        nationality: item['สัญชาติ'],
+        payment_number: item['หมายเลขชำระเงิน']
+      };
+      
+      // ส่ง PDF ไปบันทึกในฐานข้อมูล
+      const response = await fetch(`${SERVER_BASE_URL}/.netlify/functions/store-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          requestNumber,
+          pdfBase64,
+          metadata
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // บันทึกข้อมูล URL ของ PDF
+        savedPDFs[requestNumber] = {
+          url: result.url,
+          created_at: new Date().toISOString()
+        };
+        
+        // แสดงสถานะว่าบันทึกสำเร็จ
+        statusElement.textContent = 'บันทึกไฟล์ PDF สำเร็จ';
+        statusElement.className = 'pdf-status saved';
+        
+        // สร้าง QR Code จาก URL ที่ได้
+        generateQRCodeFromURL(result.url, requestNumber);
+      } else {
+        throw new Error(result.error || 'ไม่สามารถบันทึกไฟล์ PDF ได้');
+      }
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการสร้างและบันทึก PDF:', error);
+      statusElement.textContent = 'ไม่สามารถบันทึกไฟล์ PDF ได้';
+      statusElement.className = 'pdf-status';
+      
+      // สร้าง QR Code แบบปกติ
+      generateAndShowQRCode(item);
+    }
+  }
+
+  // สร้าง QR Code จาก URL ที่มีอยู่
+  function generateQRCodeFromURL(url, requestNumber) {
+    // ล้าง QR Code Container
+    const qrContainer = document.getElementById('qrcode-container');
+    qrContainer.innerHTML = '';
+    
+    // สร้าง QR Code
+    const canvas = document.createElement('canvas');
+    new QRious({
+      element: canvas,
+      value: url,
+      size: 1000,
+      level: 'Q',
+      background: 'white',
+      foreground: 'black',
+      padding: 0
+    });
+
+    // แสดง QR Code
+    const qrImg = document.createElement('img');
+    qrImg.src = canvas.toDataURL('image/png');
+    qrImg.style.width = '60px';
+    qrImg.style.height = '60px';
+    qrImg.setAttribute('data-request-number', requestNumber);
+    qrImg.setAttribute('alt', 'QR Code สำหรับเปิด PDF ใบเสร็จ ' + requestNumber);
+    qrContainer.appendChild(qrImg);
+
+    // เพิ่มคำแนะนำเล็กๆ ใต้ QR
+    const qrHint = document.createElement('div');
+    qrHint.style.fontSize = '7px';
+    qrHint.style.textAlign = 'center';
+    qrHint.style.marginTop = '2px';
+    qrHint.textContent = 'สแกนเพื่อเปิด PDF';
+    qrContainer.appendChild(qrHint);
+  }
+
+  // สร้าง QR Code และแสดงบนหน้า (กรณีไม่มี PDF ในฐานข้อมูล)
+  function generateAndShowQRCode(item) {
+    // ล้าง QR Code Container
+    const qrContainer = document.getElementById('qrcode-container');
+    qrContainer.innerHTML = '';
+
+    // ดึงข้อมูลที่ต้องใช้
+    const requestNumber = document.getElementById('request-number').textContent;
+    
+    // สร้าง URL สำหรับเปิด PDF โดยตรง
+    const pdfUrl = `${SERVER_BASE_URL}/.netlify/functions/get-receipt-pdf?requestNumber=${encodeURIComponent(requestNumber)}`;
+    
+    // สร้าง QR Code
+    const canvas = document.createElement('canvas');
+    new QRious({
+      element: canvas,
+      value: pdfUrl,
+      size: 1000,
+      level: 'Q',
+      background: 'white',
+      foreground: 'black',
+      padding: 0
+    });
+
+    // แสดง QR Code
+    const qrImg = document.createElement('img');
+    qrImg.src = canvas.toDataURL('image/png');
+    qrImg.style.width = '60px';
+    qrImg.style.height = '60px';
+    qrImg.setAttribute('data-request-number', requestNumber);
+    qrImg.setAttribute('alt', 'QR Code สำหรับเปิด PDF ใบเสร็จ ' + requestNumber);
+    qrContainer.appendChild(qrImg);
+
+    // เพิ่มคำแนะนำเล็กๆ ใต้ QR
+    const qrHint = document.createElement('div');
+    qrHint.style.fontSize = '7px';
+    qrHint.style.textAlign = 'center';
+    qrHint.style.marginTop = '2px';
+    qrHint.textContent = 'สแกนเพื่อเปิด PDF';
+    qrContainer.appendChild(qrHint);
+  }
+
+  // สร้าง PDF และดาวน์โหลดเฉพาะรายการที่เลือก
+  async function generatePDF() {
+    const selectedIndex = document.getElementById('dataSelector').value;
+    if (selectedIndex === '') {
+      alert('กรุณาเลือกรายการก่อนดาวน์โหลด');
+      return;
+    }
+    const item = workerData[selectedIndex];
+    await generateSinglePDF(item);
+  }
+
+  // สร้าง PDF สำหรับรายการเดียว
+  async function generateSinglePDF(item) {
+    // อัปเดตข้อมูลบนใบเสร็จ
+    updateReceiptData(item);
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    try {
+      const canvas = await html2canvas(document.getElementById('pf1'), {
+        scale: 12, // เพิ่มความคมชัด
+        useCORS: true,
+        allowTaint: true,
+        letterRendering: true
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const imgWidth = 210;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+
+      // ตั้งชื่อไฟล์โดยใช้เลขคำขอ
+      const requestNumber = item['เลขคำขอ'];
+      const filename = `receipt_${requestNumber.replace(/[^\w]/g, '')}.pdf`;
+      doc.save(filename);
+
+      return true;
+    } catch (error) {
+      console.error('เกิดข้อผิดพลาดในการสร้าง PDF:', error);
+      return false;
+    }
+  }
+
+  // สร้างและดาวน์โหลด PDF ทั้งหมด
+  async function generateAllPDFs() {
+    if (workerData.length === 0) {
+      alert('ไม่มีข้อมูลที่จะดาวน์โหลด');
+      return;
+    }
+
+    // แสดง progress bar
+    const progressBar = document.getElementById('progressBar');
+    const progressIndicator = document.getElementById('progressIndicator');
+    const statusText = document.getElementById('status-text');
+
+    progressBar.style.display = 'block';
+    statusText.textContent = 'กำลังเตรียมข้อมูลสำหรับการดาวน์โหลด...';
+
+    // ให้เวลากับ UI อัปเดต
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // สร้าง PDF ทั้งหมด
+    let successCount = 0;
+    for (let i = 0; i < workerData.length; i++) {
+      // อัปเดต progress
+      const progress = Math.round((i / workerData.length) * 100);
+      progressIndicator.style.width = progress + '%';
+      progressIndicator.textContent = progress + '%';
+      statusText.textContent = `กำลังสร้าง PDF (${i+1}/${workerData.length})`;
+
+      // ให้เวลากับ UI อัปเดต
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // สร้าง PDF
+      const result = await generateSinglePDF(workerData[i]);
+      if (result) successCount++;
+
+      // ให้เวลา browser จัดการ download
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // เสร็จสิ้น
+    progressIndicator.style.width = '100%';
+    progressIndicator.textContent = '100%';
+    statusText.textContent = `เสร็จสิ้น! สร้าง PDF สำเร็จ ${successCount} รายการ จากทั้งหมด ${workerData.length} รายการ`;
+
+    // ซ่อน progress bar หลังจาก 3 วินาที
+    setTimeout(() => {
+      progressBar.style.display = 'none';
+      statusText.textContent = '';
+    }, 3000);
+  }
+
+  // เรียกใช้เมื่อโหลดหน้า
+  document.addEventListener('DOMContentLoaded', function() {
+    // โหลดข้อมูลคนงาน
+    loadWorkerData();
+
+    // เพิ่ม event listener
+    document.getElementById('downloadButton').addEventListener('click', generatePDF);
+    document.getElementById('downloadAllButton').addEventListener('click', generateAllPDFs);
+
+    // จัดการกับกรณีที่มีการเลือกรายการตั้งแต่เริ่มต้น
+    setTimeout(() => {
+      if (document.getElementById('dataSelector').value === '') {
+        // ถ้ายังไม่มีการเลือก ให้แสดง QR Code เปล่า
+        const emptyItem = {
+          'ชื่อภาษาอังกฤษ': 'MR. EXAMPLE NAME',
+          'เลขคำขอ': 'WP-XX-XXXXXX',
+          'หมายเลขอ้างอิงคนต่างด้าว': 'XXXXXXXXXXXX',
+          'เลขที่บนขวาใบเสร็จ': 'XXXXXXXXXX',
+          'หมายเลขประจำตัว': '-',
+          'สัญชาติ': 'ตัวอย่าง',
+          'หมายเลขชำระเงิน': 'IVXXXXXXXX'
+        };
+        checkExistingPDF(emptyItem);
+      }
+    }, 100);
+  });
+</script>
+</body>
+</html>
