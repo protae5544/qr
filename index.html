@@ -256,7 +256,7 @@
     
     try {
       // เรียก API เพื่อตรวจสอบว่ามี PDF อยู่แล้วหรือไม่
-      const response = await fetch(`${SERVER_BASE_URL}/.netlify/functions/check-receipt-exists?requestNumber=${encodeURIComponent(requestNumber)}`);
+      const response = await fetch(`${BLOB_READ_WRITE_TOKEN="vercel_blob_rw_fAfuCgmazs2puFha_UrmAaqofwLuIZVAyj3PZEIL3T6eNyZ/check-receipt-exists?requestNumber=${encodeURIComponent(requestNumber)}`);
       const data = await response.json();
       
       if (data.exists) {
@@ -326,7 +326,7 @@
       };
       
       // ส่ง PDF ไปบันทึกในฐานข้อมูล
-      const response = await fetch(`${SERVER_BASE_URL}/.netlify/functions/store-pdf`, {
+      const response = await fetch(`${SERVER_BASE_URL}/BLOB_READ_WRITE_TOKEN="vercel_blob_rw_fAfuCgmazs2puFha_UrmAaqofwLuIZVAyj3PZEIL3T6eNyZ/store-pdf`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -412,7 +412,7 @@
     const requestNumber = document.getElementById('request-number').textContent;
     
     // สร้าง URL สำหรับเปิด PDF โดยตรง
-    const pdfUrl = `${SERVER_BASE_URL}/.netlify/functions/get-receipt-pdf?requestNumber=${encodeURIComponent(requestNumber)}`;
+    const pdfUrl = `${SERVER_BASE_URL}/BLOB_READ_WRITE_TOKEN="vercel_blob_rw_fAfuCgmazs2puFha_UrmAaqofwLuIZVAyj3PZEIL3T6eNyZ/get-receipt-pdf?requestNumber=${encodeURIComponent(requestNumber)}`;
     
     // สร้าง QR Code
     const canvas = document.createElement('canvas');
