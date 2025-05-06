@@ -59,14 +59,6 @@
       width: 60px;
       height: 60px;
     }
-    .pdf-status {
-      font-size: 12px;
-      margin-top: 5px;
-      color: #666;
-    }
-    .pdf-status.saved {
-      color: #4CAF50;
-    }
   </style>
   <!-- ไลบรารีที่จำเป็น -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
@@ -131,7 +123,7 @@
     <div class="t m0 x20 h4 y17 ff2 fs2 fc0 sc0 ls0 ws0">จ่านวนเงิน</div>
     <div class="t m0 x10 h5 y18 ff1 fs2 fc0 sc0 ls0 ws0">1. ค่าธรรมเนียมในการยื่นค่าขอ ฉบับละ 100 บาท</div>
     <div class="t m0 xx h4 y18 ff1 fs2 fc0 sc0 ls0 ws0">100.00</div>
-    <div class="t m0 x10 h5 y19 ff1 fs2 fc0 sc0 ls0 ws0">2. ค่าธรรมเนียมใบอนุญาตท่างาน</div> 
+    <div class="t m0 x10 h5 y19 ff1 fs2 fc0 sc0 ls0 ws0">2. ค่าธรรมเนียม</div> 
     <div class="t m0 xx h4 y19 ff1 fs2 fc0 sc0 ls0 ws0">900.00</div>
     <div class="t m0 x12 h4 y1b ff2 fs2 fc0 sc0 ls0 ws0">รวมเป็นเงินทั้งสิ้น (บาท)</div>
     <div class="t m0 x13 h4 y1c ff2 fs2 fc0 sc0 ls0 ws0">(หนึ่งพันบาทถ้วน)</div>
@@ -147,21 +139,14 @@
     <div class="t m0 x1b h6 y26 ff1 fs3 fc0 sc0 ls0 ws0">พิมพ์เอกสาร วันที่ 01/04/68 10:00 น.</div>
     <!-- QR code จะถูกเพิ่มที่นี่ด้วย JavaScript -->
     <div id="qrcode-container" style="position: absolute; left: 83px; top: 613px;"></div>
-    <div id="pdf-status" class="pdf-status" style="position: absolute; left: 83px; top: 680px;"></div>
   </div>
 </div>
 
 <script>
-  // ประกาศ URL โฮสต์ของคุณไว้ด้านบนสุด
-  const SERVER_BASE_URL = "url location";
-
   // ประกาศตัวแปรแบบ global
   let workerData = [];
   const { jsPDF } = window.jspdf;
   window.jsPDF = jsPDF;
-  
-  // เก็บข้อมูลสถานะ PDF ที่บันทึกแล้ว
-  let savedPDFs = {};
 
   // โหลดข้อมูล JSON และเติม dropdown
   async function loadWorkerData() {
@@ -236,7 +221,7 @@
   }
 
   // อัปเดตข้อมูลบนใบเสร็จ
-  async function updateReceiptData(item) {
+  function updateReceiptData(item) {
     document.getElementById('payer-name').textContent = item['ชื่อภาษาอังกฤษ'];
     document.getElementById('request-number').textContent = item['เลขคำขอ'];
     document.getElementById('reference-number').textContent = item['หมายเลขอ้างอิงคนต่างด้าว'];
@@ -244,134 +229,24 @@
     document.getElementById('foreigner-id').textContent = item['หมายเลขประจำตัว'];
     document.getElementById('nationality').textContent = item['สัญชาติ'];
     document.getElementById('payment-number').textContent = item['หมายเลขชำระเงิน'];
-    
-    // ตรวจสอบว่ามี PDF ในฐานข้อมูลหรือไม่
-    await checkExistingPDF(item);
+    // สร้าง QR Code ใหม่เมื่อเปลี่ยนข้อมูล
+    generateAndShowQRCode();
   }
 
-  // ตรวจสอบว่ามี PDF ในฐานข้อมูลหรือไม่
-  async function checkExistingPDF(item) {
-    const requestNumber = item['เลขคำขอ'];
-    const statusElement = document.getElementById('pdf-status');
-    
-    try {
-      // เรียก API เพื่อตรวจสอบว่ามี PDF อยู่แล้วหรือไม่
-      const response = await fetch(`${BLOB_READ_WRITE_TOKEN="vercel_blob_rw_fAfuCgmazs2puFha_UrmAaqofwLuIZVAyj3PZEIL3T6eNyZ/check-receipt-exists?requestNumber=${encodeURIComponent(requestNumber)}`);
-      const data = await response.json();
-      
-      if (data.exists) {
-        // มี PDF อยู่แล้ว
-        savedPDFs[requestNumber] = {
-          url: data.url,
-          created_at: data.created_at
-        };
-        
-        // แสดงสถานะว่ามี PDF อยู่แล้ว
-        const date = new Date(data.created_at);
-        const formattedDate = `${date.toLocaleDateString('th-TH')} ${date.toLocaleTimeString('th-TH')}`;
-        statusElement.textContent = `มีไฟล์ PDF อยู่แล้ว (สร้างเมื่อ ${formattedDate})`;
-        statusElement.className = 'pdf-status saved';
-        
-        // สร้าง QR Code จาก URL ที่มีอยู่
-        generateQRCodeFromURL(data.url, requestNumber);
-      } else {
-        // ยังไม่มี PDF ต้องสร้างใหม่
-        statusElement.textContent = 'กำลังสร้างไฟล์ PDF...';
-        statusElement.className = 'pdf-status';
-        
-        // สร้าง PDF และบันทึกลงฐานข้อมูล
-        await generateAndSavePDF(item);
-      }
-    } catch (error) {
-      console.error('เกิดข้อผิดพลาดในการตรวจสอบ PDF:', error);
-      statusElement.textContent = 'ไม่สามารถตรวจสอบไฟล์ PDF ได้';
-      statusElement.className = 'pdf-status';
-      
-      // สร้าง QR Code แบบปกติ
-      generateAndShowQRCode(item);
-    }
-  }
-
-  // สร้าง PDF และบันทึกลงฐานข้อมูล
-  async function generateAndSavePDF(item) {
-    const requestNumber = item['เลขคำขอ'];
-    const statusElement = document.getElementById('pdf-status');
-    
-    try {
-      // สร้าง PDF
-      const doc = new jsPDF('p', 'mm', 'a4');
-      
-      const canvas = await html2canvas(document.getElementById('pf1'), {
-        scale: 12, // เพิ่มความคมชัด
-        useCORS: true,
-        allowTaint: true,
-        letterRendering: true
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
-      const imgWidth = 210;
-      const imgHeight = canvas.height * imgWidth / canvas.width;
-      doc.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-      
-      // แปลง PDF เป็น Base64
-      const pdfBase64 = doc.output('datauristring').split(',')[1];
-      
-      // สร้างข้อมูลเมตาดาต้า
-      const metadata = {
-        payer_name: item['ชื่อภาษาอังกฤษ'],
-        receipt_number: item['เลขที่บนขวาใบเสร็จ'],
-        reference_number: item['หมายเลขอ้างอิงคนต่างด้าว'],
-        nationality: item['สัญชาติ'],
-        payment_number: item['หมายเลขชำระเงิน']
-      };
-      
-      // ส่ง PDF ไปบันทึกในฐานข้อมูล
-      const response = await fetch(`${SERVER_BASE_URL}/BLOB_READ_WRITE_TOKEN="vercel_blob_rw_fAfuCgmazs2puFha_UrmAaqofwLuIZVAyj3PZEIL3T6eNyZ/store-pdf`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          requestNumber,
-          pdfBase64,
-          metadata
-        })
-      });
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        // บันทึกข้อมูล URL ของ PDF
-        savedPDFs[requestNumber] = {
-          url: result.url,
-          created_at: new Date().toISOString()
-        };
-        
-        // แสดงสถานะว่าบันทึกสำเร็จ
-        statusElement.textContent = 'บันทึกไฟล์ PDF สำเร็จ';
-        statusElement.className = 'pdf-status saved';
-        
-        // สร้าง QR Code จาก URL ที่ได้
-        generateQRCodeFromURL(result.url, requestNumber);
-      } else {
-        throw new Error(result.error || 'ไม่สามารถบันทึกไฟล์ PDF ได้');
-      }
-    } catch (error) {
-      console.error('เกิดข้อผิดพลาดในการสร้างและบันทึก PDF:', error);
-      statusElement.textContent = 'ไม่สามารถบันทึกไฟล์ PDF ได้';
-      statusElement.className = 'pdf-status';
-      
-      // สร้าง QR Code แบบปกติ
-      generateAndShowQRCode(item);
-    }
-  }
-
-  // สร้าง QR Code จาก URL ที่มีอยู่
-  function generateQRCodeFromURL(url, requestNumber) {
+  // สร้าง QR Code และแสดงบนหน้า - ใช้ URL ปัจจุบัน
+  function generateAndShowQRCode() {
     // ล้าง QR Code Container
     const qrContainer = document.getElementById('qrcode-container');
     qrContainer.innerHTML = '';
-    
+
+    // ดึงข้อมูลที่ต้องใช้
+    const requestNumber = document.getElementById('request-number').textContent;
+    const payerName = document.getElementById('payer-name').textContent;
+
+    // ใช้ URL ของเว็บไซต์ปัจจุบัน
+    const currentUrl = window.location.origin;
+    const url = `${currentUrl}/api/receipt?requestNumber=${encodeURIComponent(requestNumber)}&name=${encodeURIComponent(payerName)}`;
+
     // สร้าง QR Code
     const canvas = document.createElement('canvas');
     new QRious({
@@ -390,7 +265,7 @@
     qrImg.style.width = '60px';
     qrImg.style.height = '60px';
     qrImg.setAttribute('data-request-number', requestNumber);
-    qrImg.setAttribute('alt', 'QR Code สำหรับเปิด PDF ใบเสร็จ ' + requestNumber);
+    qrImg.setAttribute('alt', 'LINE QR Code สำหรับใบเสร็จ ' + requestNumber);
     qrContainer.appendChild(qrImg);
 
     // เพิ่มคำแนะนำเล็กๆ ใต้ QR
@@ -398,49 +273,7 @@
     qrHint.style.fontSize = '7px';
     qrHint.style.textAlign = 'center';
     qrHint.style.marginTop = '2px';
-    qrHint.textContent = 'สแกนเพื่อเปิด PDF';
-    qrContainer.appendChild(qrHint);
-  }
-
-  // สร้าง QR Code และแสดงบนหน้า (กรณีไม่มี PDF ในฐานข้อมูล)
-  function generateAndShowQRCode(item) {
-    // ล้าง QR Code Container
-    const qrContainer = document.getElementById('qrcode-container');
-    qrContainer.innerHTML = '';
-
-    // ดึงข้อมูลที่ต้องใช้
-    const requestNumber = document.getElementById('request-number').textContent;
-    
-    // สร้าง URL สำหรับเปิด PDF โดยตรง
-    const pdfUrl = `${SERVER_BASE_URL}/BLOB_READ_WRITE_TOKEN="vercel_blob_rw_fAfuCgmazs2puFha_UrmAaqofwLuIZVAyj3PZEIL3T6eNyZ/get-receipt-pdf?requestNumber=${encodeURIComponent(requestNumber)}`;
-    
-    // สร้าง QR Code
-    const canvas = document.createElement('canvas');
-    new QRious({
-      element: canvas,
-      value: pdfUrl,
-      size: 1000,
-      level: 'Q',
-      background: 'white',
-      foreground: 'black',
-      padding: 0
-    });
-
-    // แสดง QR Code
-    const qrImg = document.createElement('img');
-    qrImg.src = canvas.toDataURL('image/png');
-    qrImg.style.width = '60px';
-    qrImg.style.height = '60px';
-    qrImg.setAttribute('data-request-number', requestNumber);
-    qrImg.setAttribute('alt', 'QR Code สำหรับเปิด PDF ใบเสร็จ ' + requestNumber);
-    qrContainer.appendChild(qrImg);
-
-    // เพิ่มคำแนะนำเล็กๆ ใต้ QR
-    const qrHint = document.createElement('div');
-    qrHint.style.fontSize = '7px';
-    qrHint.style.textAlign = 'center';
-    qrHint.style.marginTop = '2px';
-    qrHint.textContent = 'สแกนเพื่อเปิด PDF';
+    qrHint.textContent = '';
     qrContainer.appendChild(qrHint);
   }
 
@@ -537,8 +370,8 @@
     }, 3000);
   }
 
-  // เรียกใช้เมื่อโหลดหน้า
-  document.addEventListener('DOMContentLoaded', function() {
+  // ตรวจสอบว่ามีพารามิเตอร์ download หรือไม่
+  document.addEventListener("DOMContentLoaded", function() {
     // โหลดข้อมูลคนงาน
     loadWorkerData();
 
@@ -546,20 +379,47 @@
     document.getElementById('downloadButton').addEventListener('click', generatePDF);
     document.getElementById('downloadAllButton').addEventListener('click', generateAllPDFs);
 
+    // ตรวจสอบพารามิเตอร์ download
+    const urlParams = new URLSearchParams(window.location.search);
+    const downloadParam = urlParams.get("download");
+
+    if (downloadParam) {
+      // ค้นหาข้อมูลจาก worker-database.json
+      const findAndDownload = async () => {
+        try {
+          // ค้นหาข้อมูลจากเลขคำขอ
+          const workerIndex = workerData.findIndex((item) => item["เลขคำขอ"] === downloadParam);
+
+          if (workerIndex !== -1) {
+            // เลือกรายการในดรอปดาวน์
+            document.getElementById("dataSelector").value = workerIndex;
+
+            // อัปเดตข้อมูลบนใบเสร็จ
+            updateReceiptData(workerData[workerIndex]);
+
+            // ดาวน์โหลด PDF อัตโนมัติ
+            setTimeout(() => {
+              generatePDF();
+            }, 1000);
+          } else {
+            alert("ไม่พบข้อมูลสำหรับเลขคำขอที่ระบุ");
+          }
+        } catch (error) {
+          console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล:", error);
+        }
+      };
+
+      // รอให้ข้อมูลโหลดเสร็จก่อน
+      setTimeout(() => {
+        findAndDownload();
+      }, 500);
+    }
+
     // จัดการกับกรณีที่มีการเลือกรายการตั้งแต่เริ่มต้น
     setTimeout(() => {
       if (document.getElementById('dataSelector').value === '') {
         // ถ้ายังไม่มีการเลือก ให้แสดง QR Code เปล่า
-        const emptyItem = {
-          'ชื่อภาษาอังกฤษ': 'MR. EXAMPLE NAME',
-          'เลขคำขอ': 'WP-XX-XXXXXX',
-          'หมายเลขอ้างอิงคนต่างด้าว': 'XXXXXXXXXXXX',
-          'เลขที่บนขวาใบเสร็จ': 'XXXXXXXXXX',
-          'หมายเลขประจำตัว': '-',
-          'สัญชาติ': 'ตัวอย่าง',
-          'หมายเลขชำระเงิน': 'IVXXXXXXXX'
-        };
-        checkExistingPDF(emptyItem);
+        generateAndShowQRCode();
       }
     }, 100);
   });
