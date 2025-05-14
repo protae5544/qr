@@ -190,66 +190,54 @@
     generateAndShowQRCode(item);
   }
 
- // สร้าง QR code สำหรับใบเสร็จนี้ (encode URL สำหรับดาวน์โหลด PDF โดยตรง)
-function generateAndShowQRCode(item = null) {
-  const qrContainer = document.getElementById('qrcode-container');
-  qrContainer.innerHTML = '';
-  let requestNumber, payerName;
-  if (item) {
-    requestNumber = item['เลขคำขอ'];
-    payerName = item['ชื่อภาษาอังกฤษ'];
-  } else {
-    requestNumber = document.getElementById('request-number').textContent;
-    payerName = document.getElementById('payer-name').textContent;
-  }
-  
-  // สร้าง URL ที่จะ encode ลง QR (ชี้มาที่ index.html พร้อม requestNumber และ parameter download=true)
-  const currentUrl = window.location.origin + window.location.pathname;
-  const url = `${currentUrl}?requestNumber=${encodeURIComponent(requestNumber)}&download=true`;
-
-  // สร้าง QR ขนาดใหญ่เพื่อความคม
-  const canvas = document.createElement('canvas');
-  new QRious({
-    element: canvas,
-    value: url,
-    size: 300,
-    level: 'H',
-    background: 'white',
-    foreground: 'black',
-    padding: 0
-  });
-
-  // แสดง QR ขนาด 60px
-  const qrImg = document.createElement('img');
-  qrImg.src = canvas.toDataURL('image/png');
-  qrImg.style.width = '60px';
-  qrImg.style.height = '60px';
-  qrImg.setAttribute('alt', 'QR Code สำหรับดาวน์โหลดใบเสร็จ ' + requestNumber);
-  qrContainer.appendChild(qrImg);
-}
-
-// ถ้าเปิดมาพร้อม requestNumber ใน URL ให้เลือกข้อมูลให้อัตโนมัติและดาวน์โหลด PDF หากมี parameter download=true
-function handleAutoSelectFromURL() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const requestNumber = urlParams.get("requestNumber");
-  const autoDownload = urlParams.get("download") === "true";
-  
-  if (requestNumber) {
-    const idx = workerData.findIndex(item => item["เลขคำขอ"] === requestNumber);
-    if (idx !== -1) {
-      document.getElementById("dataSelector").value = idx;
-      updateReceiptData(workerData[idx]);
-      
-      // ถ้ามี parameter download=true ให้ดาวน์โหลด PDF อัตโนมัติ
-      if (autoDownload) {
-        // รอให้ DOM โหลดเสร็จก่อน แล้วจึงสร้าง PDF
-        setTimeout(() => {
-          generateSinglePDF(workerData[idx]);
-        }, 1000);
-      }
+  // สร้าง QR code สำหรับใบเสร็จนี้ (encode URL สำหรับเข้าเว็บนี้ + requestNumber)
+  function generateAndShowQRCode(item = null) {
+    const qrContainer = document.getElementById('qrcode-container');
+    qrContainer.innerHTML = '';
+    let requestNumber, payerName;
+    if (item) {
+      requestNumber = item['เลขคำขอ'];
+      payerName = item['ชื่อภาษาอังกฤษ'];
+    } else {
+      requestNumber = document.getElementById('request-number').textContent;
+      payerName = document.getElementById('payer-name').textContent;
     }
+    // สร้าง URL ที่จะ encode ลง QR (ชี้มาที่ index.html พร้อม requestNumber)
+    const currentUrl = window.location.origin + window.location.pathname;
+    const url = `${currentUrl}?requestNumber=${encodeURIComponent(requestNumber)}`;
+
+    // สร้าง QR ขนาดใหญ่เพื่อความคม
+    const canvas = document.createElement('canvas');
+    new QRious({
+      element: canvas,
+      value: url,
+      size: 300,
+      level: 'H',
+      background: 'white',
+      foreground: 'black',
+      padding: 0
+    });
+
+    // แสดง QR ขนาด 60px
+    const qrImg = document.createElement('img');
+    qrImg.src = canvas.toDataURL('image/png');
+    qrImg.style.width = '60px';
+    qrImg.style.height = '60px';
+    qrImg.setAttribute('alt', 'QR Code สำหรับใบเสร็จ ' + requestNumber);
+    qrContainer.appendChild(qrImg);
   }
-}
+
+  // สร้าง PDF เฉพาะรายการที่เลือก
+  async function generatePDF() {
+    const selectedIndex = document.getElementById('dataSelector').value;
+    if (selectedIndex === '') {
+      alert('กรุณาเลือกรายการก่อนดาวน์โหลด');
+      return;
+    }
+    const item = workerData[selectedIndex];
+    await generateSinglePDF(item);
+  }
+
   // สร้าง PDF สำหรับ 1 รายการ
   async function generateSinglePDF(item) {
     updateReceiptData(item);
